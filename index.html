@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronobotics | Ultimate Edition</title>
+    
+    <!-- Fonts: 'Outfit' for a geometric, futuristic premium look -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* --- COLOR VARIABLES --- */
+        :root {
+            /* Palette */
+            --bg-deep: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-glass: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            
+            /* Dynamic Device Colors (The "Beautiful" Touch) */
+            --c-light: #f59e0b; /* Amber */
+            --c-pc: #8b5cf6;    /* Violet */
+            --c-robot: #ef4444; /* Red */
+            --c-entry: #10b981; /* Emerald */
+            --c-fan: #0ea5e9;  /* Sky */
+            --c-plug: #ec4899; /* Pink */
+            --c-default: #6366f1; /* Indigo */
+
+            --shadow-deep: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 25px rgba(0,0,0,0.2);
+        }
+
+        [data-theme="light"] {
+            --bg-deep: #f3f4f6;
+            --bg-surface: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --shadow-deep: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
+                radial-gradient(circle at 85% 20%, rgba(236, 72, 153, 0.15), transparent 40%);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        /* --- SIDEBAR --- */
+        aside {
+            width: 85px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .logo {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--c-default), var(--c-pc));
+            border-radius: 14px;
+            margin-bottom: 50px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.6rem;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .nav-item {
+            width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted);
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            font-size: 1.4rem;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+        .nav-item.active { background: var(--c-default); color: white; }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            flex: 1;
+            padding: 35px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* HEADER */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .welcome h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -1px; }
+        .welcome p { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+
+        /* BUTTONS */
+        .btn {
+            padding: 12px 24px; border-radius: 10px;
+            font-weight: 600; font-size: 0.9rem; cursor: pointer;
+            transition: all 0.3s ease; border: none; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-primary {
+            background: var(--c-default); color: white;
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        
+        .btn-outline {
+            background: var(--bg-surface); border: 1px solid var(--glass-border); color: var(--text-main);
+        }
+        .btn-outline:hover { border-color: var(--c-default); color: var(--c-default); }
+
+        /* EXIT BUTTON */
+        .btn-exit {
+            background: rgba(239, 68, 68, 0.1); color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .btn-exit:hover {
+            background: #ef4444; color: white; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        /* WIDGETS */
+        .grid-top {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+        }
+        .stat-card {
+            background: var(--bg-glass); border: 1px solid var(--glass-border);
+            padding: 25px; border-radius: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow-deep);
+        }
+        .stat-info h4 { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-info h2 { font-size: 1.8rem; font-weight: 700; margin-top: 5px; }
+        .stat-icon {
+            width: 50px; height: 50px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; color: var(--text-main);
+        }
+
+        /* --- DEVICES --- */
+        .section-head { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .section-title { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .section-title::after { content: ''; width: 40px; height: 2px; background: var(--glass-border); }
+
+        .grid-devices {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;
+        }
+
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: space-between;
+            min-height: 200px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Color coding the active state via Inline Styles in HTML */
+        .card-icon {
+            width: 64px; height: 64px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px;
+            color: var(--text-muted);
+            transition: all 0.4s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255,255,255,0.2);
+            /* No transform shake, just glow */
+        }
+
+        /* Specific Active State Colors */
+        .card.active {
+            border-color: var(--card-color);
+            background: linear-gradient(to bottom, var(--bg-surface), rgba(255,255,255,0.02));
+            box-shadow: 0 20px 40px -10px var(--card-glow);
+        }
+        .card.active .card-icon {
+            color: var(--card-color);
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 10px 20px -5px var(--card-glow);
+        }
+
+        .card-info { text-align: center; margin-top: 15px; }
+        .card-name { font-weight: 700; font-size: 1.1rem; }
+        .card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+
+        /* SWITCH UI */
+        .toggle-track {
+            width: 50px; height: 28px;
+            background: #334155;
+            border-radius: 50px;
+            position: relative; margin-top: 20px;
+            transition: 0.4s;
+        }
+        .toggle-knob {
+            position: absolute; top: 3px; left: 3px;
+            width: 22px; height: 22px;
+            background: white; border-radius: 50%;
+            transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .card.active .toggle-track { background: var(--card-color); }
+        .card.active .toggle-knob { transform: translateX(22px); }
+
+        /* --- ACTIVITY PANELS --- */
+        .bottom-grid {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+        }
+        .panel {
+            background: var(--bg-glass); border: 1px solid var(--glass-border);
+            padding: 25px; border-radius: 20px;
+            box-shadow: var(--shadow-deep);
+        }
+        .log-list { list-style: none; max-height: 180px; overflow-y: auto; }
+        .log-item {
+            padding: 12px 0; border-bottom: 1px solid var(--glass-border);
+            display: flex; align-items: center; gap: 12px; font-size: 0.9rem;
+            animation: slideIn 0.4s ease;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* LOGIN OVERLAY */
+        #login-overlay {
+            position: fixed; inset: 0; background: var(--bg-deep); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .login-box {
+            background: var(--bg-glass); backdrop-filter: blur(30px);
+            width: 400px; padding: 45px; border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-deep); text-align: center;
+        }
+        .inp {
+            width: 100%; padding: 16px; margin: 12px 0;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+            border-radius: 12px; color: white; outline: none; transition: 0.3s;
+        }
+        .inp:focus { border-color: var(--c-default); }
+        .btn-login {
+            width: 100%; padding: 16px; background: var(--c-default);
+            color: white; border: none; border-radius: 12px;
+            font-weight: 700; cursor: pointer; margin-top: 15px;
+            transition: 0.3s;
+        }
+        .btn-login:hover { box-shadow: 0 10px 20px -5px rgba(99,102,241,0.5); }
+
+        /* Responsive */
+        @media (max-width: 1000px) { .grid-devices { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 800px) { 
+            .grid-top { grid-template-columns: 1fr; } .bottom-grid { grid-template-columns: 1fr; } 
+        }
+        @media (max-width: 600px) { 
+            .grid-devices { grid-template-columns: 1fr; } aside { display: none; } header { flex-direction: column; align-items: flex-start; gap: 20px; } 
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--c-default), var(--c-pc)); border-radius: 16px; margin: 0 auto 25px; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                <i class="ph ph-robot"></i>
+            </div>
+            <h2 style="font-size: 1.8rem; margin-bottom: 5px;">Chronobotics</h2>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Secure Access Protocol</p>
+            <input type="text" id="uid" class="inp" placeholder="Username">
+            <input type="password" id="upass" class="inp" placeholder="Password">
+            <button class="btn-login" onclick="doLogin()">INITIALIZE</button>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside>
+        <div class="logo"><i class="ph ph-robot"></i></div>
+        <div class="nav-item active"><i class="ph ph-house"></i></div>
+        <div class="nav-item"><i class="ph ph-lightning"></i></div>
+        <div class="nav-item"><i class="ph ph-chart-bar"></i></div>
+        <div style="margin-top: auto;" class="nav-item" onclick="toggleTheme()">
+            <i class="ph ph-sun" id="theme-icon"></i>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+        <header>
+            <div class="welcome">
+                <h1>Dashboard</h1>
+                <p>System Online • Ultimate Edition</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="setAll(1)"><i class="ph ph-lightning"></i> All On</button>
+                <button class="btn btn-outline" onclick="setAll(0)"><i class="ph ph-lightning-slash"></i> All Off</button>
+                <!-- NEW EXIT BUTTON -->
+                <button class="btn btn-exit" onclick="doLogout()">
+                    <i class="ph ph-sign-out"></i> Exit
+                </button>
+            </div>
+        </header>
+
+        <!-- WIDGETS -->
+        <div class="grid-top">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Environment</h4>
+                    <h2 style="color: var(--c-fan);">24°C</h2>
+                </div>
+                <div class="stat-icon" style="color: var(--c-fan);"><i class="ph ph-thermometer"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Active Devices</h4>
+                    <h2 style="color: var(--c-default);" id="active-count">6 / 6</h2>
+                </div>
+                <div class="stat-icon" style="color: var(--c-default);"><i class="ph ph-cpu"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Power Usage</h4>
+                    <h2 style="color: var(--c-light);">1.2 kW</h2>
+                </div>
+                <div class="stat-icon" style="color: var(--c-light);"><i class="ph ph-lightning"></i></div>
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="section-head">
+            <div class="section-title"><i class="ph ph-squares-four"></i> Devices</div>
+        </div>
+
+        <div class="grid-devices">
+            
+            <!-- 1. Main Light (Amber) -->
+            <div class="card active" id="card-relay1" style="--card-color: var(--c-light); --card-glow: rgba(245, 158, 11, 0.4);" onclick="toggle('relay1')">
+                <div class="card-icon"><i class="ph ph-lightbulb"></i></div>
+                <div class="card-info">
+                    <div class="card-name">Main Light</div>
+                    <div class="card-sub">Living Room</div>
+                </div>
+                <div class="toggle-track"><div class="toggle-knob"></div></div>
+            </div>
+
+            <!-- 2. PC Desk (Violet) -->
+            <div class="card active" id="card-relay2" style="--card-color: var(--c-pc); --card-glow: rgba(139, 92, 246, 0.4);" onclick="toggle('relay2')">
+                <div class="card-icon"><i class="ph ph-desktop-tower"></i></div>
+                <div class="card-info">
+                    <div class="card-name">PC Desk</div>
+                    <div class="card-sub">Workstation</div>
+                </div>
+                <div class="toggle-track"><div class="toggle-knob"></div></div>
+            </div>
+
+            <!-- 3. Robot Arm (Red) -->
+            <div class="card active" id="card-relay3" style="--card-color: var(--c-robot); --card-glow: rgba(239, 68, 68, 0.4);" onclick="toggle('relay3')">
+                <div class="card-icon"><i class="ph ph-robot"></i></div>
+                <div class="card-info">
+                    <div class="card-name">Robot Arm</div>
+                    <div class="card-sub">Industrial</div>
+                </div>
+                <div class="toggle-track"><div class="toggle-knob"></div></div>
+            </div>
+
+            <!-- 4. Entry (Emerald) -->
+            <div class="card active" id="card-relay4" style="--card-color: var(--c-entry); --card-glow: rgba(16, 185, 129, 0.4);" onclick="toggle('relay4')">
+                <div class="card-icon"><i class="ph ph-door-open"></i></div>
+                <div class="card-info">
+                    <div class="card-name">Entry</div>
+                    <div class="card-sub">Front Door</div>
+                </div>
+                <div class="toggle-track"><div class="toggle-knob"></div></div>
+            </div>
+
+            <!-- 5. Fan (Sky Blue) -->
+            <div class="card active" id="card-relay5" style="--card-color: var(--c-fan); --card-glow: rgba(14, 165, 233, 0.4);" onclick="toggle('relay5')">
+                <div class="card-icon"><i class="ph ph-fan"></i></div>
+                <div class="card-info">
+                    <div class="card-name">Fan</div>
+                    <div class="card-sub">Ventilation</div>
+                </div>
+                <div class="toggle-track"><div class="toggle-knob"></div></div>
+            </div>
+
+            <!-- 6. Aux Plug (Pink) -->
+            <div class="card active" id="card-relay6" style="--card-color: var(--c-plug); --card-glow: rgba(236, 72, 153, 0.4);" onclick="toggle('relay6')">
+                <div class="card-icon"><i class="ph ph-plug"></i></div>
+                <div class="card-info">
+                    <div class="card-name">Aux Plug</div>
+                    <div class="card-sub">Accessory</div>
+                </div>
+                <div class="toggle-track"><div class="toggle-knob"></div></div>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM INFO -->
+        <div class="bottom-grid">
+            <div class="panel">
+                <div style="margin-bottom: 15px; font-weight: 700; color: var(--text-muted);">System Activity</div>
+                <ul class="log-list" id="activity-log">
+                    <li class="log-item">
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">Now</span>
+                        <span style="color: var(--c-default);">System Initialized</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="panel">
+                <div style="margin-bottom: 15px; font-weight: 700; color: var(--text-muted);">Security</div>
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem;">
+                    <i class="ph ph-shield-check" style="color: var(--c-entry); font-size: 1.2rem;"></i>
+                    <span>All Sensors Active</span>
+                </div>
+            </div>
+        </div>
+    </main>
+<script>
+    // --- PASTE YOUR GITHUB RAW URL HERE ---
+    const GITHUB_FILE_URL = "PASTE_YOUR_GITHUB_RAW_URL_HERE";
+
+    // --- FIREBASE CONFIG ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyA5XIBnmLCKI_gs5I-nKlqNNncADHYwqi0",
+        databaseURL: "https://automation-8fe16-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+
+    let db;
+    try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e){}
+
+    // --- AUTH LOGIC (Using GitHub) ---
+    async function doLogin() {
+        const u = document.getElementById('uid').value;
+        const p = document.getElementById('upass').value;
+        const loginBtn = document.querySelector('.btn-login');
+        const originalText = loginBtn.innerText;
+
+        loginBtn.innerText = "Checking...";
+        loginBtn.style.opacity = "0.7";
+
+        try {
+            // Fetch from GitHub
+            const response = await fetch(GITHUB_FILE_URL);
+            const data = await response.json();
+
+            if (data && data.users) {
+                // Check if user/pass matches
+                const userFound = data.users.some(user => user.id === u && user.pass === p);
+
+                if (userFound) {
+                    const ov = document.getElementById('login-overlay');
+                    ov.style.opacity = '0';
+                    setTimeout(() => ov.style.display = 'none', 500);
+                    initFirebase();
+                } else {
+                    alert('Invalid ID or Password');
+                }
+            } else {
+                alert('Error: JSON format incorrect');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Failed to connect to GitHub. Check the URL or internet connection.');
+        } finally {
+            loginBtn.innerText = originalText;
+            loginBtn.style.opacity = "1";
+        }
+    }
+
+    // ... (Keep the rest of your existing script: Theme, Firebase, etc.) ...
+    
+    function toggleTheme() { /* existing code */ }
+    function initFirebase() { /* existing code */ }
+    // ... etc
+</script>
