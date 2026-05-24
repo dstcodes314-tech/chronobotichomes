@@ -51,7 +51,6 @@
                 radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
                 radial-gradient(circle at 85% 20%, rgba(236, 72, 153, 0.15), transparent 40%);
             color: var(--text-main);
-            /* HEIGHT IMPROVEMENT: Allow page to scroll if needed */
             min-height: 100vh; 
             display: flex;
             overflow-x: hidden;
@@ -61,7 +60,6 @@
         /* --- SIDEBAR --- */
         aside {
             width: 85px;
-            /* HEIGHT IMPROVEMENT: Fixed height sidebar */
             height: 100vh;
             position: sticky;
             top: 0;
@@ -104,7 +102,6 @@
         main {
             flex: 1;
             padding: 35px;
-            /* HEIGHT IMPROVEMENT: Internal scroll for content */
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -177,7 +174,7 @@
             padding: 30px;
             display: flex; flex-direction: column; align-items: center;
             justify-content: space-between;
-            min-height: 220px; /* Increased height slightly for better feel */
+            min-height: 220px;
             cursor: pointer;
             position: relative;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -248,6 +245,7 @@
         .log-time { color: var(--text-muted); font-family: monospace; font-size: 0.75rem; }
         .log-msg { font-weight: 500; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% {opacity: 1;} 50% {opacity: 0.4;} 100% {opacity: 1;} }
 
         /* LOGIN */
         #login-overlay {
@@ -313,7 +311,8 @@
         <header>
             <div class="welcome">
                 <h1>Dashboard</h1>
-                <p>System Online • Ultimate Edition</p>
+                <!-- Fixed: Dynamic Connection Status -->
+                <p id="connection-status">Checking Connection...</p>
             </div>
             <div class="header-actions">
                 <button class="btn btn-outline" onclick="setAll(1)"><i class="ph ph-lightning"></i> All On</button>
@@ -356,7 +355,8 @@
         <div class="grid-devices">
             
             <!-- 1. Main Light (Stays Relay 1) -->
-            <div class="card active" id="card-relay1" style="--card-color: var(--c-light); --card-glow: rgba(245, 158, 11, 0.4);" onclick="toggle('relay1')">
+            <!-- REMOVED 'active' class to fix light glitch -->
+            <div class="card" id="card-relay1" style="--card-color: var(--c-light); --card-glow: rgba(245, 158, 11, 0.4);" onclick="toggle('relay1')">
                 <div class="card-icon"><i class="ph ph-lightbulb"></i></div>
                 <div class="card-info">
                     <div class="card-name">Main Light</div>
@@ -365,8 +365,8 @@
                 <div class="toggle-track"><div class="toggle-thumb"></div></div>
             </div>
 
-            <!-- 2. FAN (Now Position 2, Relay 2 - Formerly PC) -->
-            <div class="card active" id="card-relay2" style="--card-color: var(--c-fan); --card-glow: rgba(14, 165, 233, 0.4);" onclick="toggle('relay2')">
+            <!-- 2. FAN (Relay 2) -->
+            <div class="card" id="card-relay2" style="--card-color: var(--c-fan); --card-glow: rgba(14, 165, 233, 0.4);" onclick="toggle('relay2')">
                 <div class="card-icon"><i class="ph ph-fan"></i></div>
                 <div class="card-info">
                     <div class="card-name">Fan</div>
@@ -375,8 +375,8 @@
                 <div class="toggle-track"><div class="toggle-thumb"></div></div>
             </div>
 
-            <!-- 3. AUX PLUG (Now Position 3, Relay 3 - Formerly Robot) -->
-            <div class="card active" id="card-relay3" style="--card-color: var(--c-plug); --card-glow: rgba(236, 72, 153, 0.4);" onclick="toggle('relay3')">
+            <!-- 3. AUX PLUG (Relay 3) -->
+            <div class="card" id="card-relay3" style="--card-color: var(--c-plug); --card-glow: rgba(236, 72, 153, 0.4);" onclick="toggle('relay3')">
                 <div class="card-icon"><i class="ph ph-plug"></i></div>
                 <div class="card-info">
                     <div class="card-name">Aux Plug</div>
@@ -385,8 +385,8 @@
                 <div class="toggle-track"><div class="toggle-thumb"></div></div>
             </div>
 
-            <!-- 4. Entry (Stays Relay 4) -->
-            <div class="card active" id="card-relay4" style="--card-color: var(--c-entry); --card-glow: rgba(16, 185, 129, 0.4);" onclick="toggle('relay4')">
+            <!-- 4. Entry (Relay 4) -->
+            <div class="card" id="card-relay4" style="--card-color: var(--c-entry); --card-glow: rgba(16, 185, 129, 0.4);" onclick="toggle('relay4')">
                 <div class="card-icon"><i class="ph ph-door-open"></i></div>
                 <div class="card-info">
                     <div class="card-name">Entry</div>
@@ -395,8 +395,8 @@
                 <div class="toggle-track"><div class="toggle-thumb"></div></div>
             </div>
 
-            <!-- 5. PC DESK (Now Position 5, Relay 5 - Formerly Fan) -->
-            <div class="card active" id="card-relay5" style="--card-color: var(--c-pc); --card-glow: rgba(139, 92, 246, 0.4);" onclick="toggle('relay5')">
+            <!-- 5. PC DESK (Relay 5) -->
+            <div class="card" id="card-relay5" style="--card-color: var(--c-pc); --card-glow: rgba(139, 92, 246, 0.4);" onclick="toggle('relay5')">
                 <div class="card-icon"><i class="ph ph-desktop-tower"></i></div>
                 <div class="card-info">
                     <div class="card-name">PC Desk</div>
@@ -405,8 +405,8 @@
                 <div class="toggle-track"><div class="toggle-thumb"></div></div>
             </div>
 
-            <!-- 6. ROBOT ARM (Now Position 6, Relay 6 - Formerly Aux) -->
-            <div class="card active" id="card-relay6" style="--card-color: var(--c-robot); --card-glow: rgba(239, 68, 68, 0.4);" onclick="toggle('relay6')">
+            <!-- 6. ROBOT ARM (Relay 6) -->
+            <div class="card" id="card-relay6" style="--card-color: var(--c-robot); --card-glow: rgba(239, 68, 68, 0.4);" onclick="toggle('relay6')">
                 <div class="card-icon"><i class="ph ph-robot"></i></div>
                 <div class="card-info">
                     <div class="card-name">Robot Arm</div>
@@ -514,26 +514,41 @@
             document.getElementById('theme-icon').classList.replace('ph-sun', 'ph-moon');
         }
 
-        // --- 4. FIREBASE SYNC (Matches new IDs) ---
+        // --- 4. FIREBASE SYNC & CONNECTION STATUS ---
         function initFirebase() {
+            // A. DEVICE DATA SYNC
             const homeRef = db.ref('home');
             homeRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if(data) {
-                    updateCard('relay1', data.relay1); // Main Light
-                    updateCard('relay2', data.relay2); // Fan (Swapped)
-                    updateCard('relay3', data.relay3); // Aux (Swapped)
-                    updateCard('relay4', data.relay4); // Entry
-                    updateCard('relay5', data.relay5); // PC (Swapped)
-                    updateCard('relay6', data.relay6); // Robot (Swapped)
+                    updateCard('relay1', data.relay1);
+                    updateCard('relay2', data.relay2);
+                    updateCard('relay3', data.relay3);
+                    updateCard('relay4', data.relay4);
+                    updateCard('relay5', data.relay5);
+                    updateCard('relay6', data.relay6);
                     
                     updateActiveCount(data);
+                }
+            });
+
+            // B. CONNECTION STATUS MONITOR (New Feature)
+            const connectedRef = db.ref('.info/connected');
+            connectedRef.on('value', (snap) => {
+                const isConnected = snap.val();
+                const statusEl = document.getElementById('connection-status');
+                
+                if (isConnected) {
+                    statusEl.innerHTML = `<span style="color:var(--c-entry); display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:var(--c-entry); border-radius:50%; animation: pulse 2s infinite;"></div> Connected</span>`;
+                } else {
+                    statusEl.innerHTML = `<span style="color:var(--c-robot); display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:var(--c-robot); border-radius:50%;"></div> Not Connected</span>`;
                 }
             });
         }
 
         function updateCard(id, val) {
             const card = document.getElementById('card-' + id);
+            // FIXED: Only add 'active' class if val is strictly 1
             if(val === 1) {
                 card.classList.add('active');
             } else {
